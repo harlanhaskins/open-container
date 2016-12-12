@@ -19,70 +19,67 @@
         {% do inRides.append(driverId) %}
     {% endif %}
 {% endfor %}
-          <table class="table">
-            <thead>
-              <tr>
-                <th>Driver Name</th>
-                <th>Seats Taken</th>
-                <th>Departure Time</th>
-                <th>Return Time</th>
-                <th>Current Passengers</th>
-                <th>Comments</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-            {% for ride in rides %}
-              <tr>
-                <td>{{ride['driver']}}</td>
-                {% if ride['capacity'] == 2 ** 16 %}
-                <td>&infin;</td>
-                {% else %}
-                <td>{{ride['passengers']|length}}/{{ride['capacity']}}</td>
-                {% endif %}
-                <td>{{ride['departureTime']}}</td>
-                <td>{{ride['returnTime']}}</td>
-                <td>{{ride['passengers']|join(', ', attribute='name')}}</td>
-                <td>{{ride['comments']}}</td>
-                {% if ride['passengers']|selectattr('name', 'equalto', user)|list|length > 0 %}
-                {% set passengerId = (ride['passengers']|selectattr('name', 'equalto', user)|list|first).id %}
-                <td><button type="button" onclick="leaveRide({{passengerId}});"
-class="btn btn-xs btn-danger">Leave Ride</button></td>
-                {% else %}
-                    {% if ride['driver'] == user %}
-                        <td><button type="button" onclick="deleteRide({{ride['id']}}, {{event}})", class="btn btn-xs btn-danger">Delete Ride</button>
-                    {% elif driverId != 0 or inRides|length > 0 and ride['id'] not in inRides%}
-                        <td><span class="label label-danger">Can Only Join One Ride At Once</span>
-                    {% else %}
-                        {% if ride['passengers']|length >= ride['capacity'] %}
-                            <td><span class="label label-danger">Ride Full</span>
-                        {% else %}
-                            <td>
-                            <button type="button" onclick="joinRide({{ride['id']}});" class="btn btn-xs btn-success">Join Ride</button>
-                        {% endif %}
-                    {% endif %}
-                {% endif %}
-              </tr>
-            {% endfor %}
-              <tr>
-                <td></td>
-                <td></td>
-                <td></td>
-                <td></td>
-                <td></td>
-                <td></td>
-                <td>
-                {% if inRides|length == 0 %}
-                    <a href="/create/ride/{{event}}" class="btn btn-success">Create Ride</a>
-                {% endif %}
-                {% if user == host %}
-                <button type='button' onclick="removeEvent({{event}});" class="btn btn-danger">Delete Rideboard</button>
-                    <a href="/edit/event/{{event}}" class="btn btn-info">Edit
-Event</a>
-                {% endif %}
-                </td>
-            </tr>
-            </tbody>
-          </table>
+{% for ride in rides %}
+<div class="panel panel-default">
+  <div class="panel-heading">
+    <div class="row">
+      <div class='col-xs-9'>
+        <h3 class='panel-title'>
+          {{ride['driver']}}
+        </h3>
+        <div class='light'>
+          {{ride['departureTime']}} to {{ride['returnTime']}}
+        </div>
+      </div>
+      <div class="col-xs-3">
+        <div class="text-right">
+          {% if ride['passengers']|selectattr('name', 'equalto', user)|list|length > 0 %}
+            {% set passengerId = (ride['passengers']|selectattr('name', 'equalto', user)|list|first).id %}
+            <button type="button" onclick="leaveRide({{passengerId}});"
+                    class="btn btn-xs btn-danger">Leave Ride</button>
+          {% else %}
+            {% if ride['driver'] == user %}
+              <button type="button" onclick="deleteRide({{ride['id']}}, {{event}})", class="btn btn-xs btn-danger">Delete Ride</button>
+            {% elif driverId != 0 or inRides|length > 0 and ride['id'] not in inRides%}
+              <!-- Nothing for this case -->
+            {% else %}
+              {% if ride['passengers']|length >= ride['capacity'] %}
+                <span class="label label-danger">Ride Full</span>
+              {% else %}
+                <button type="button" onclick="joinRide({{ride['id']}});" class="btn btn-xs btn-success">Join Ride</button>
+              {% endif %}
+            {% endif %}
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="panel-body">
+    <div class='occupancy-cont'>
+      <div class='text-center occupancy'>
+        {% if ride['capacity'] == 2 ** 16 %}
+        &infin;
+        {% else %}
+        <sup>{{ride['passengers']|length}}</sup>&frasl;<sub>{{ride['capacity']}}8</sub>
+        {% endif %}
+      </div>
+    </div>
+    <div class='italic light bottom-10'>
+      {{ride['comments']}}
+    </div>
+    Riders: {{ride['passengers']|join(', ', attribute='name')}}
+  </div>
+</div>
+{% endfor %}
+
+{% if inRides|length == 0 %}
+  <a href="/create/ride/{{event}}" class="btn btn-success">Create Ride</a>
+{% endif %}
+
+{% if user == host %}
+  <button type='button' onclick="removeEvent({{event}});" class="btn btn-danger">Delete Rideboard</button>
+  <a href="/edit/event/{{event}}" class="btn btn-info">Edit
+    Event</a>
+{% endif %}
 
 {% endblock %}
